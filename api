@@ -1,0 +1,28 @@
+import requests
+import pandas as pd
+import numpy as np
+
+# Define the API key and symbol
+api_key = 'YOUR_API_KEY'
+symbol = 'BTC/USDT'
+
+# Define the API endpoint for daily data
+endpoint = f'https://www.alphavantage.co/query?function=DIGITAL_CURRENCY_DAILY&symbol={symbol}&apikey={api_key}'
+
+# Retrieve the daily data
+response = requests.get(endpoint)
+data = response.json()['Time Series (Digital Currency Daily)']
+
+# Convert the data to a pandas DataFrame
+df = pd.DataFrame(data).T
+df.index = pd.to_datetime(df.index)
+df = df.astype(float)
+
+# Calculate the momentum of the closing price by taking the difference of the current closing price and the closing price of x days ago
+window = 14
+df['momentum'] = df['4a. close (USD)'] - df['4a. close (USD)'].shift(window)
+
+# Define the trading signal as the momentum strategy: if the momentum is above 0, buy, and if it is below 0, sell
+signal = np.zeros(len(df))
+signal[df['momentum'] > 0] = 1
+signal[df['momentum'] < 0] = -1
